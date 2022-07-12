@@ -1,16 +1,18 @@
 from flask import Flask, jsonify, request
+from config import Config
 import datetime
 from main import *
 
 today = datetime.datetime.today()
 
 app = Flask(__name__)
+app.config.from_object(Config)
 
 client = app.test_client()
 
-
-
-db = create_engine('postgresql://postgres:batman10@localhost:5432/HeadHunter').connect()
+db = create_engine(
+    f'postgresql://postgres:{app.config["PASSWORD"]}@{app.config["HOST"]}:{app.config["PORT"]}/{app.config["DBNAME"]}'
+).connect()
 
 df = pd.read_sql_table('raw_data_tbl', db)
 
