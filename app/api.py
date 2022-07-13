@@ -1,7 +1,7 @@
 from flask import Flask, jsonify, request
 from config import Config
 import datetime
-from main import *
+from models import *
 
 today = datetime.datetime.today()
 
@@ -10,30 +10,23 @@ app.config.from_object(Config)
 
 client = app.test_client()
 
-db = create_engine(
-    f'postgresql://postgres:{app.config["PASSWORD"]}@{app.config["HOST"]}:{app.config["PORT"]}/{app.config["DBNAME"]}'
-).connect()
-
-df = pd.read_sql_table('raw_data_tbl', db)
-
-df = df.loc[:, ['id', 'name', 'area', 'salary', 'experience', 'schedule',
-                'employment', 'key_skills', 'specializations', 'published_at']]
-
-
-def filter_df(data, start_date, end_date=today):
-    data = data[(data['published_at'] > start_date) & (data['published_at'] < end_date)]
-    return data
+db_user = app.config["USER"]
+host = app.config["HOST"]
+port = app.config["PORT"]
+db_name = app.config["DBNAME"]
+db_table = app.config["DBTABLE"]
+db_password = app.config["PASSWORD"]
 
 
 @app.route('/labor', methods=['GET'])  # route() decorator tells Flask what URL should trigger our function
 def get_list():
+    data = conn_to_db(db_user, host, port, db_name, db_password, db_table)
+
+    # Make filter by params
     params = request.json
-    data = conn_to_db()
+    data = filter_by_params(data, params['start_date'], params['end_date'])
 
-    '''Make filter by params'''
-    data = filter_df(data, params['start_date'], params['end_date'])
-
-    '''Do all operations with data'''
+    # Do all operations with data
     df_correct_form(data)
     hh_regions_to_edunav(data)
     hh_ids_to_edunav(data)

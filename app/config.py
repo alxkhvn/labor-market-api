@@ -8,3 +8,4 @@ class Config:
     PORT = os.environ['PORT']
     USER = os.environ['USER']
     PASSWORD = os.environ['PASSWORD']
+    DBTABLE = os.environ['DBTABLE']

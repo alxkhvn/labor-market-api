@@ -2,7 +2,6 @@ import numpy as np
 import pandas as pd
 import json
 from kzt_exchangerates import Rates
-import time
 from sqlalchemy import create_engine
 
 
@@ -26,11 +25,14 @@ salary_id_vac_dict = {}
 df_id_vac_dict = {}
 
 
-def conn_to_db():
-    db = create_engine('postgresql://postgres:batman10@localhost:5432/HeadHunter').connect()
+def conn_to_db(username, host, port, dbname, password, tblname):
+    db = create_engine(f'postgresql://{username}:{password}@{host}:{port}/{dbname}').connect()
+    data = pd.read_sql_table(tblname, db)
+    return data
 
-    data = pd.read_sql_table('raw_data_tbl', db)
 
+def filter_by_params(data, start_date, end_date):
+    data = data[(data['published_at'] > start_date) & (data['published_at'] < end_date)]
     data = data.loc[:, ['id', 'name', 'area', 'salary', 'experience', 'schedule',
                     'employment', 'key_skills', 'specializations', 'published_at']]
     return data
@@ -185,7 +187,7 @@ def combine_stat(spec, data, salary_data):
     result = {"id": spec,
               "name": spec_name,
               "avg_salary": avg_sal,
-              "expirience_salary": ex_json,
+              "experience_salary": ex_json,
               "area_salary": area_json,
               "vacancy_num": vac_num,
               "vacancy_num_area": vac_num_by_area,
@@ -193,33 +195,3 @@ def combine_stat(spec, data, salary_data):
               "employment_dist": employment_dist}
 
     return result
-
-
-def main():
-    df = conn_to_db()
-
-    df_correct_form(df)
-    hh_regions_to_edunav(df)
-    hh_ids_to_edunav(df)
-    salary_df = create_salary_df(df)
-    avg_salary(salary_df)
-    change_currency(salary_df)
-    create_id_vac_dicts()
-    fill_id_vac_dict(salary_df, salary_id_vac_dict)
-    fill_id_vac_dict(df, df_id_vac_dict)
-
-    main_dic = {}
-
-    for i in edunav_id_list:
-        try:
-            ans = combine_stat(i, df, salary_df)
-            main_dic[i] = ans
-        except:
-            pass
-
-    with open('new_output.json', 'w', encoding='utf-8') as file:
-        json.dump(main_dic, file, ensure_ascii=False)
-
-
-if __name__ == '__main__':
-    main()
