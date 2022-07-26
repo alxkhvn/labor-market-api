@@ -1,9 +1,13 @@
 from flask import Flask, jsonify, request
+import sqlalchemy as db
+from sqlalchemy.orm import sessionmaker, scoped_session
+from sqlalchemy import create_engine
 from config import Config
-import datetime
-from models import *
-
-today = datetime.datetime.today()
+from sqlalchemy.ext.declarative import declarative_base
+from schemas import TempRawdataSchema
+from flask_apispec import marshal_with
+import pandas as pd
+from logic import all_data_operations
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -17,33 +21,32 @@ db_name = app.config["DBNAME"]
 db_table = app.config["DBTABLE"]
 db_password = app.config["PASSWORD"]
 
+engine = create_engine(f'postgresql://{db_user}:{db_password}@{host}:{port}/{db_name}')
 
-@app.route('/labor', methods=['GET'])  # route() decorator tells Flask what URL should trigger our function
+
+session = scoped_session(sessionmaker(
+    autocommit=False, autoflush=False, bind=engine))
+
+Base = declarative_base()
+Base.query = session.query_property()
+
+from models import TempRawdata
+
+Base.metadata.create_all(bind=engine)
+
+
+@app.route('/labor', methods=['GET'])
 def get_list():
-    data = conn_to_db(db_user, host, port, db_name, db_password, db_table)
+    tbl = TempRawdata.get_data_list('2022-06-01', '2022-06-05')
+    df = pd.DataFrame(tbl.get_json())
+    final_df = all_data_operations(df)
+    return jsonify(final_df)
 
-    # Make filter by params
-    params = request.json
-    data = filter_by_params(data, params['start_date'], params['end_date'])
 
-    # Do all operations with data
-    df_correct_form(data)
-    hh_regions_to_edunav(data)
-    hh_ids_to_edunav(data)
-    salary_df = create_salary_df(data)
-    avg_salary(salary_df)
-    change_currency(salary_df)
-    create_id_vac_dicts()
-    fill_id_vac_dict(salary_df, salary_id_vac_dict)
-    fill_id_vac_dict(data, df_id_vac_dict)
+@app.teardown_appcontext
+def shutdown_session(exception=None):
+    session.remove()
 
-    main_dic = {}
 
-    for i in edunav_id_list:
-        try:
-            ans = combine_stat(i, data, salary_df)
-            main_dic[i] = ans
-        except:
-            pass
-
-    return jsonify(main_dic)
+if __name__ == '__main__':
+    app.run()
