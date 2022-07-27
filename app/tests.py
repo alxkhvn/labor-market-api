@@ -1,4 +1,4 @@
-from api import client
+from app import client
 
 
 def test_get():

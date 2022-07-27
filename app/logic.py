@@ -2,7 +2,6 @@ import numpy as np
 import pandas as pd
 import json
 from kzt_exchangerates import Rates
-from sqlalchemy import create_engine
 
 
 types_df = pd.read_csv('../files/types.csv')['types']
@@ -23,13 +22,6 @@ replace_dic = {"'": '"', "None": '"None"', "False": '"False"', "True": '"True"'}
 
 salary_id_vac_dict = {}
 df_id_vac_dict = {}
-
-
-def filter_by_params(data, start_date, end_date):
-    data = data[(data['published_at'] > start_date) & (data['published_at'] < end_date)]
-    data = data.loc[:, ['id', 'name', 'area', 'salary', 'experience', 'schedule',
-                    'employment', 'key_skills', 'specializations', 'published_at']]
-    return data
 
 
 def replace_all(text, dic):

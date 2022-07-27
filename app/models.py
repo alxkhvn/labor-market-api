@@ -1,4 +1,5 @@
-from api import db, Base, session
+import sqlalchemy as db
+from app import Base, session
 from schemas import TempRawdataSchema
 from flask_apispec import marshal_with
 
@@ -14,17 +15,15 @@ class TempRawdata(Base):
     employment = db.Column(db.String(500))
     key_skills = db.Column(db.String(500))
     specializations = db.Column(db.String(500))
-    published_at = db.Column(db.TIMESTAMP)
+    published_at = db.Column(db.Date)
 
     @classmethod
     @marshal_with(TempRawdataSchema(many=True))
     def get_data_list(cls, start_date, end_date):
         try:
-            tbl = cls.query.all()
+            tbl = cls.query.filter(cls.published_at.between(start_date, end_date)).all()
             session.commit()
         except Exception:
             session.rollback()
             raise
         return tbl
-
-
