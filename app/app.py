@@ -11,15 +11,18 @@ app.config.from_object(Config)
 
 client = app.test_client()
 
-db_user = app.config["USER"]
-host = app.config["HOST"]
-port = app.config["PORT"]
-db_name = app.config["DBNAME"]
-db_table = app.config["DBTABLE"]
-db_password = app.config["PASSWORD"]
+# db_user = app.config["USER"]
+# host = app.config["HOST"]
+# port = app.config["PORT"]
+# db_name = app.config["DBNAME"]
+# db_table = app.config["DBTABLE"]
+# db_password = app.config["PASSWORD"]
+#
+# engine = create_engine(f'postgresql://{db_user}:{db_password}@{host}:{port}/{db_name}')
 
-engine = create_engine(f'postgresql://{db_user}:{db_password}@{host}:{port}/{db_name}')
+database_url = 'postgres://qeklulawkyaukv:9c32130f9549a3f4976886e9ff3c14ff175324ecd6663fc4696c988ca58d2dce@ec2-54-208-104-27.compute-1.amazonaws.com:5432/d3sf6nhpsnmj14'
 
+engine = create_engine(database_url)
 
 session = scoped_session(sessionmaker(
     autocommit=False, autoflush=False, bind=engine))
