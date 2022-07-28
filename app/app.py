@@ -5,6 +5,9 @@ from config import Config
 from sqlalchemy.ext.declarative import declarative_base
 import pandas as pd
 from logic import all_data_operations
+from datetime import datetime
+
+today = datetime.today().strftime("%Y-%m-%d")
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -35,10 +38,14 @@ from models import TempRawdata
 Base.metadata.create_all(bind=engine)
 
 
-@app.route('/labor', methods=['POST'])
+@app.route('/labor', methods=['GET'])
 def get_list():
     try:
-        tbl = TempRawdata.get_data_list(**request.json)
+        args = request.args
+        print(args)
+        start_date = args.get('start_date', type=str)
+        end_date = args.get('end_date', default=today, type=str)
+        tbl = TempRawdata.get_data_list(start_date, end_date)
         df = pd.DataFrame(tbl.get_json())
         final_df = all_data_operations(df)
     except Exception as e:
