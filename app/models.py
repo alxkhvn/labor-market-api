@@ -1,5 +1,4 @@
-import sqlalchemy as db
-from app import Base, session
+from app import db, Base, session
 from schemas import TempRawdataSchema
 from flask_apispec import marshal_with
 

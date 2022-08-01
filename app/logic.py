@@ -215,7 +215,7 @@ def all_data_operations(data):
 
         for i in edunav_id_list:
             try:
-                ans = combine_stat(i, data, salary_df)
+                ans = combine_stat(i, df, salary_df)
                 main_dic[i] = ans
             except Exception:
                 pass

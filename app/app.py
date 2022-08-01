@@ -1,3 +1,4 @@
+import sqlalchemy as db
 from flask import Flask, jsonify, request
 from sqlalchemy.orm import sessionmaker, scoped_session
 from sqlalchemy import create_engine
@@ -6,26 +7,23 @@ from sqlalchemy.ext.declarative import declarative_base
 import pandas as pd
 from logic import all_data_operations
 from datetime import datetime
+from flask_apispec import marshal_with
+from schemas import TempRawdataSchema
+import json
 
 today = datetime.today().strftime("%Y-%m-%d")
 
 app = Flask(__name__)
 app.config.from_object(Config)
 
+EXTERNAL = True
+host_conf = None
+port_conf = None
+
 client = app.test_client()
 
-# db_user = app.config["USER"]
-# host = app.config["HOST"]
-# port = app.config["PORT"]
-# db_name = app.config["DBNAME"]
-# db_table = app.config["DBTABLE"]
-# db_password = app.config["PASSWORD"]
-#
-# engine = create_engine(f'postgresql://{db_user}:{db_password}@{host}:{port}/{db_name}')
-
-database_url = 'postgres://qeklulawkyaukv:9c32130f9549a3f4976886e9ff3c14ff175324ecd6663fc4696c988ca58d2dce@ec2-54-208-104-27.compute-1.amazonaws.com:5432/d3sf6nhpsnmj14'
-
-engine = create_engine(database_url)
+engine = create_engine(
+    f'postgresql://{app.config["USER"]}:{app.config["PASSWORD"]}@{app.config["HOST"]}:{app.config["PORT"]}/{app.config["DBNAME"]}')
 
 session = scoped_session(sessionmaker(
     autocommit=False, autoflush=False, bind=engine))
@@ -33,9 +31,34 @@ session = scoped_session(sessionmaker(
 Base = declarative_base()
 Base.query = session.query_property()
 
-from models import TempRawdata
+#from models import TempRawdata
 
 Base.metadata.create_all(bind=engine)
+
+
+class TempRawdata(Base):
+    __tablename__ = app.config["DBTABLE"]
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(500))
+    area = db.Column(db.String(500))
+    salary = db.Column(db.String(500))
+    experience = db.Column(db.String(500))
+    schedule = db.Column(db.String(500))
+    employment = db.Column(db.String(500))
+    key_skills = db.Column(db.String(500))
+    specializations = db.Column(db.String(500))
+    published_at = db.Column(db.Date)
+
+    @classmethod
+    @marshal_with(TempRawdataSchema(many=True))
+    def get_data_list(cls, start_date, end_date):
+        try:
+            tbl = cls.query.filter(cls.published_at.between(start_date, end_date)).all()
+            session.commit()
+        except Exception:
+            session.rollback()
+            raise
+        return tbl
 
 
 @app.route('/labor', methods=['GET'])
@@ -50,7 +73,7 @@ def get_list():
         final_df = all_data_operations(df)
     except Exception as e:
         return {'message': str(e)}, 400
-    return jsonify(final_df)
+    return json.dumps(final_df, ensure_ascii=False).encode('utf8')
 
 
 @app.teardown_appcontext
@@ -58,5 +81,16 @@ def shutdown_session(exception=None):
     session.remove()
 
 
+def config_server_parameters(external=False):
+    global host_conf
+    global port_conf
+
+    if external:
+        host_conf, port_conf = '0.0.0.0', 8080
+    else:
+        host_conf, port_conf = None, None
+
+
 if __name__ == '__main__':
-    app.run()
+    config_server_parameters(EXTERNAL)
+    app.run(host_conf, port_conf)
