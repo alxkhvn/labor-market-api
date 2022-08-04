@@ -4,7 +4,7 @@ from flask_apispec import marshal_with
 
 
 class TempRawdata(Base):
-    __tablename__ = 'temp_raw_data_tbl'
+    __tablename__ = 'raw_data_tbl'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(500))
     area = db.Column(db.String(500))

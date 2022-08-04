@@ -10,20 +10,20 @@ from datetime import datetime
 from flask_apispec import marshal_with
 from schemas import TempRawdataSchema
 import json
+from config import Config
 
 today = datetime.today().strftime("%Y-%m-%d")
 
 app = Flask(__name__)
 app.config.from_object(Config)
 
-EXTERNAL = True
-host_conf = None
-port_conf = None
 
 client = app.test_client()
 
-engine = create_engine(
-    f'postgresql://{app.config["USER"]}:{app.config["PASSWORD"]}@{app.config["HOST"]}:{app.config["PORT"]}/{app.config["DBNAME"]}')
+# engine = create_engine(
+#     f'postgresql://{app.config["USER"]}:{app.config["PASSWORD"]}@{app.config["HOST"]}:{app.config["PORT"]}/{app.config["DBNAME"]}')
+
+engine = create_engine(Config.SQLALCHEMY_DATABASE_URI)
 
 session = scoped_session(sessionmaker(
     autocommit=False, autoflush=False, bind=engine))
@@ -31,13 +31,12 @@ session = scoped_session(sessionmaker(
 Base = declarative_base()
 Base.query = session.query_property()
 
-#from models import TempRawdata
 
 Base.metadata.create_all(bind=engine)
 
 
 class TempRawdata(Base):
-    __tablename__ = app.config["DBTABLE"]
+    __tablename__ = 'raw_data_tbl'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(500))
     area = db.Column(db.String(500))
@@ -81,16 +80,5 @@ def shutdown_session(exception=None):
     session.remove()
 
 
-def config_server_parameters(external=False):
-    global host_conf
-    global port_conf
-
-    if external:
-        host_conf, port_conf = '0.0.0.0', 8080
-    else:
-        host_conf, port_conf = None, None
-
-
 if __name__ == '__main__':
-    config_server_parameters(EXTERNAL)
-    app.run(host_conf, port_conf)
+    app.run()

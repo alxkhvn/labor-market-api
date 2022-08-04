@@ -4,17 +4,17 @@ import json
 from kzt_exchangerates import Rates
 
 
-types_df = pd.read_csv('../files/types.csv')['types']
-matching_df = pd.read_csv('../files/hh_matching_with_types.csv', dtype=types_df.to_dict())
+types_df = pd.read_csv('files/types.csv')['types']
+matching_df = pd.read_csv('files/hh_matching_with_types.csv', dtype=types_df.to_dict())
 matching_dict = dict(zip(matching_df.spec_id.astype(str), matching_df.id_edunav.astype(int)))
 
-region_df = pd.read_csv('../files/regions.csv')
+region_df = pd.read_csv('files/regions.csv')
 region_dict = dict(zip(region_df.name, region_df.areas))
 
 rates = Rates()
 exchange_dict = rates.get_exchange_rates(from_kzt=True)['rates']
 
-edunav_df = pd.read_csv('../files/Edunav profs.csv')
+edunav_df = pd.read_csv('files/Edunav profs.csv')
 edunav_id_list = edunav_df['Код по Эдунаву'].astype(int).tolist()
 edunav_id_name_dict = dict(zip(edunav_df['Код по Эдунаву'].astype(int), edunav_df['Название профессии RU'].astype(str)))
 
