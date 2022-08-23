@@ -20,10 +20,10 @@ app.config.from_object(Config)
 
 client = app.test_client()
 
-# engine = create_engine(
-#     f'postgresql://{app.config["USER"]}:{app.config["PASSWORD"]}@{app.config["HOST"]}:{app.config["PORT"]}/{app.config["DBNAME"]}')
 
-engine = create_engine(Config.SQLALCHEMY_DATABASE_URI)
+#engine = create_engine(Config.SQLALCHEMY_DATABASE_URI)
+
+engine = create_engine('postgresql://postgres:batman10@localhost:5432/HeadHunter')
 
 session = scoped_session(sessionmaker(
     autocommit=False, autoflush=False, bind=engine))
@@ -47,6 +47,7 @@ class TempRawdata(Base):
     key_skills = db.Column(db.String(500))
     specializations = db.Column(db.String(500))
     published_at = db.Column(db.Date)
+    employer = db.Column(db.String(700))
 
     @classmethod
     @marshal_with(TempRawdataSchema(many=True))

@@ -15,6 +15,7 @@ class TempRawdata(Base):
     key_skills = db.Column(db.String(500))
     specializations = db.Column(db.String(500))
     published_at = db.Column(db.Date)
+    employer = db.Column(db.String(500))
 
     @classmethod
     @marshal_with(TempRawdataSchema(many=True))

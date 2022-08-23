@@ -12,3 +12,4 @@ class TempRawdataSchema(Schema):
     key_skills = fields.String(dump_only=True)
     specializations = fields.String(dump_only=True)
     published_at = fields.DateTime()
+    employer = fields.String(dump_only=True)

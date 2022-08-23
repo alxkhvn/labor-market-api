@@ -40,7 +40,6 @@ def loads(obj):
 
 def df_correct_form(data_i):
     data = data_i.copy()
-
     data.fillna(value=np.NAN, inplace=True)
     data['id'] = data.id
     data['name'] = data.name
@@ -63,6 +62,9 @@ def df_correct_form(data_i):
     data['key_skills'] = data.key_skills.apply(
         lambda x: loads(replace_all(x, replace_dic)) if x is not np.NAN else x)
     data['published_at'] = data.published_at
+    data['employer'] = data.employer.apply(
+        lambda x: loads(replace_all(x, replace_dic)) if x is not np.NAN else x)
+    data = (data.assign(employer_name=lambda df: df["employer"].str.get("name")).drop("employer", axis=1))
     data.replace(to_replace=['None', None], value=np.nan, inplace=True)
     return data
 
@@ -177,13 +179,14 @@ def num_stat(spec, data):
     schedule_tbl = schedule_tbl.to_dict()
     employment_tbl = temp_df.employment.value_counts()
     employment_tbl = employment_tbl.to_dict()
-    return vac_num, vac_num_by_area, schedule_tbl, employment_tbl
+    employer_tbl = temp_df.employer_name.value_counts().head().to_dict()
+    return vac_num, vac_num_by_area, schedule_tbl, employment_tbl, employer_tbl
 
 
 def combine_stat(spec, data, salary_data):
     spec_name = edunav_id_name_dict[spec]
     avg_sal, ex_json, area_json = salary_stat(spec, salary_data)
-    vac_num, vac_num_by_area, schedule_dist, employment_dist = num_stat(spec, data)
+    vac_num, vac_num_by_area, schedule_dist, employment_dist, employer_dist = num_stat(spec, data)
     result = {"id": spec,
               "name": spec_name,
               "avg_salary": avg_sal,
@@ -192,7 +195,8 @@ def combine_stat(spec, data, salary_data):
               "vacancy_num": vac_num,
               "vacancy_num_area": vac_num_by_area,
               "schedule_dist": schedule_dist,
-              "employment_dist": employment_dist}
+              "employment_dist": employment_dist,
+              "employer_dist": employer_dist}
 
     return result
 
@@ -200,7 +204,6 @@ def combine_stat(spec, data, salary_data):
 def all_data_operations(data):
     try:
         df = data.copy()
-
         df = df_correct_form(df)
         df = hh_regions_to_edunav(df)
         df = hh_ids_to_edunav(df)
